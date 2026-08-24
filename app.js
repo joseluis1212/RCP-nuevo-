@@ -45,8 +45,8 @@ let guiaIniciada = false;
 let metroInterval = null;
 let metroActivo = false;
 
-// Elementos DOM
-const themeToggle = document.getElementById('theme-toggle');
+// ===== DOM =====
+const themeToggle = document.getElementById('themeToggle');
 const typeCards = document.querySelectorAll('.type-card');
 const startBtn = document.getElementById('startBtn');
 const nextBtn = document.getElementById('nextBtn');
@@ -61,36 +61,46 @@ const metroStop = document.getElementById('metroStop');
 const pulseRing = document.getElementById('pulseRing');
 const voiceBtn = document.getElementById('voiceBtn');
 
-// ===== TEMAS (oscuro/claro) =====
+// ===== TEMAS =====
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
   const icon = themeToggle.querySelector('i');
   icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 }
+
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme');
   setTheme(current === 'dark' ? 'light' : 'dark');
 }
-// Cargar tema guardado
+
+// Cargar tema
 const savedTheme = localStorage.getItem('theme') || 'light';
 setTheme(savedTheme);
 themeToggle.addEventListener('click', toggleTheme);
 
-// ===== SELECTOR DE TIPO =====
+// ===== SELECTOR DE TIPO (SIN CONFIRMACIÓN) =====
 typeCards.forEach(card => {
   card.addEventListener('click', () => {
-    if (guiaIniciada) {
-      if (!confirm('¿Reiniciar la guía con el nuevo tipo?')) return;
-      reiniciarGuia();
-    }
+    const nuevoTipo = card.dataset.type;
+    if (nuevoTipo === tipoActual) return;
+
+    // Cambiar tipo sin preguntar
+    tipoActual = nuevoTipo;
     typeCards.forEach(c => c.classList.remove('active'));
     card.classList.add('active');
-    tipoActual = card.dataset.type;
-    pasoActual = 0;
-    actualizarPaso();
-    startBtn.disabled = false;
-    nextBtn.disabled = true;
+
+    // Reiniciar guía silenciosamente
+    if (guiaIniciada) {
+      reiniciarGuia();
+    } else {
+      pasoActual = 0;
+      actualizarPaso();
+      startBtn.disabled = false;
+      nextBtn.disabled = true;
+    }
+    // Detener metrónomo
+    detenerMetronomo();
   });
 });
 
@@ -100,20 +110,27 @@ function actualizarPaso() {
   const total = pasos.length;
   const idx = Math.min(pasoActual, total - 1);
   const texto = pasos[idx] || 'Completaste todos los pasos. ¡Bien hecho!';
-  stepText.textContent = texto;
+  
+  // Animación de fade (opcional)
+  stepText.style.opacity = '0';
+  setTimeout(() => {
+    stepText.textContent = texto;
+    stepText.style.opacity = '1';
+  }, 200);
+  
   stepNumber.textContent = String(idx + 1).padStart(2, '0');
   const progress = ((idx + 1) / total) * 100;
   progressFill.style.width = `${Math.min(progress, 100)}%`;
   stepCounter.textContent = `Paso ${idx + 1} de ${total}`;
   stepPercent.textContent = `${Math.round(Math.min(progress, 100))}%`;
-  // Habilitar/deshabilitar botones
+  
   nextBtn.disabled = (idx + 1 >= total);
   if (idx + 1 >= total) {
     nextBtn.innerHTML = '<i class="fas fa-check"></i> Completado';
   } else {
     nextBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Siguiente';
   }
-  // Leer el paso automáticamente si la guía está activa
+  
   if (guiaIniciada) {
     leerVoz(texto);
   }
@@ -128,7 +145,6 @@ function iniciarGuia() {
   startBtn.innerHTML = '<i class="fas fa-redo"></i> Reiniciar';
   nextBtn.disabled = false;
   metronomeBox.style.display = 'block';
-  // Detener metrónomo si estaba corriendo
   detenerMetronomo();
 }
 
@@ -149,53 +165,39 @@ function siguientePaso() {
     pasoActual++;
     actualizarPaso();
   } else {
-    // Completado: reiniciar automáticamente o mostrar mensaje
-    alert('¡Completaste todos los pasos!');
+    // Guía completada → reinicio automático
+    alert('¡Completaste todos los pasos! 🎉');
     reiniciarGuia();
   }
 }
 
-// ===== VOZ MEJORADA (Web Speech API) =====
-let vozActual = null;
+// ===== VOZ NATURAL =====
 function getVozNatural() {
   if (!window.speechSynthesis) return null;
   const voces = window.speechSynthesis.getVoices();
-  // Buscar voces en español que suenen naturales
   const preferidas = voces.filter(v => 
     v.lang.startsWith('es') && 
     (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
   );
-  if (preferidas.length) return preferidas[0];
-  // Fallback: cualquier voz en español
-  const espanol = voces.find(v => v.lang.startsWith('es'));
-  return espanol || null;
+  return preferidas.length ? preferidas[0] : voces.find(v => v.lang.startsWith('es')) || null;
 }
 
 function leerVoz(texto) {
   if (!window.speechSynthesis) {
-    console.warn('Web Speech API no soportada');
+    console.warn('Voz no soportada');
     return;
   }
-  // Cancelar cualquier voz anterior
   window.speechSynthesis.cancel();
-  
   const utterance = new SpeechSynthesisUtterance(texto);
   utterance.lang = 'es-AR';
-  utterance.rate = 0.9;   // Velocidad natural
-  utterance.pitch = 1.0;
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
   utterance.volume = 1;
-  
-  // Asignar voz natural (si está disponible)
   const voz = getVozNatural();
   if (voz) utterance.voice = voz;
-  
-  // Evento para reiniciar la voz si se interrumpe (opcional)
-  utterance.onend = () => console.log('Voz finalizada');
-  
   window.speechSynthesis.speak(utterance);
 }
 
-// Botón de voz manual
 voiceBtn.addEventListener('click', () => {
   const texto = stepText.textContent;
   if (texto && guiaIniciada) {
@@ -205,23 +207,18 @@ voiceBtn.addEventListener('click', () => {
   }
 });
 
-// ===== METRÓNOMO (con sonido y visual) =====
+// ===== METRÓNOMO =====
 function iniciarMetronomo() {
   if (metroActivo) return;
   metroActivo = true;
   metroStart.disabled = true;
   metroStop.disabled = false;
   pulseRing.classList.add('beating');
-  // Reproducir un "tic" cada 500ms (120 BPM) o ajustable
-  let count = 0;
   metroInterval = setInterval(() => {
-    // Efecto visual: latido
     pulseRing.style.transform = 'scale(1.2)';
     setTimeout(() => pulseRing.style.transform = 'scale(1)', 100);
-    // Sonido (usando Web Audio para ser más preciso)
     reproducirTic();
-    count++;
-  }, 500); // 120 BPM = 500ms
+  }, 500);
 }
 
 function detenerMetronomo() {
@@ -237,19 +234,17 @@ function detenerMetronomo() {
 function reproducirTic() {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.frequency.value = 1200;
-    oscillator.type = 'sine';
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.05);
-  } catch (e) {
-    // Fallback: usar console beep? No, mejor silencio.
-  }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 1200;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.05);
+  } catch (e) { /* silencio */ }
 }
 
 metroStart.addEventListener('click', iniciarMetronomo);
@@ -266,10 +261,9 @@ startBtn.addEventListener('click', () => {
 
 nextBtn.addEventListener('click', siguientePaso);
 
-// ===== INICIALIZAR =====
-// Precargar voces (algunos navegadores requieren interacción)
+// ===== INICIALIZACIÓN =====
 if (window.speechSynthesis) {
-  window.speechSynthesis.getVoices(); // Forzar carga
+  window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = () => {
     window.speechSynthesis.getVoices();
   };
