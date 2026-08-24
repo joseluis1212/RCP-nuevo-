@@ -1,521 +1,365 @@
-/* ===== Reset y variables ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+// ===== DATOS DE LA GUÍA =====
+const PASOS = {
+  adulto: [
+    "1. Verificá la escena: asegurate de que no haya peligros.",
+    "2. Comprobá la conciencia: sacudí suavemente y preguntá '¿Estás bien?'.",
+    "3. Si no responde, llamá al 107 o pedí ayuda.",
+    "4. Abrí la vía aérea: incliná la cabeza hacia atrás y levantá el mentón.",
+    "5. Verificá la respiración: mirá, escuchá y sentí durante 10 segundos.",
+    "6. Si no respira, comenzá con 30 compresiones torácicas (5-6 cm de profundidad).",
+    "7. Ritmo: 100-120 compresiones por minuto.",
+    "8. Luego, 2 respiraciones de rescate (cada una de 1 segundo).",
+    "9. Repetí ciclos de 30 compresiones y 2 ventilaciones.",
+    "10. Continuá hasta que llegue la ayuda o la persona responda."
+  ],
+  nino: [
+    "1. Verificá la escena: asegurate de que no haya peligros.",
+    "2. Comprobá la conciencia: sacudí suavemente y preguntá '¿Estás bien?'.",
+    "3. Si no responde, llamá al 107 o pedí ayuda.",
+    "4. Abrí la vía aérea: incliná la cabeza y levantá el mentón (menos inclinación que en adultos).",
+    "5. Verificá la respiración durante 10 segundos.",
+    "6. Si no respira, realizá 30 compresiones con una o dos manos (4-5 cm).",
+    "7. Ritmo: 100-120 compresiones por minuto.",
+    "8. Luego, 2 respiraciones suaves (soplá con menos fuerza).",
+    "9. Repetí ciclos de 30:2.",
+    "10. Continuá hasta que llegue la ayuda o el niño responda."
+  ],
+  bebe: [
+    "1. Verificá la escena: asegurate de que no haya peligros.",
+    "2. Comprobá la conciencia: palmoteá suavemente la planta del pie.",
+    "3. Si no responde, pedí ayuda y llamá al 107.",
+    "4. Abrí la vía aérea: colocalo en posición neutral (no hiperextiendas).",
+    "5. Verificá la respiración (mirá, escuchá y sentí) durante 10 segundos.",
+    "6. Si no respira, realizá 30 compresiones con 2 dedos en el centro del pecho.",
+    "7. Profundidad: 4 cm aproximadamente. Ritmo: 100-120/min.",
+    "8. Luego, 2 respiraciones suaves (cubrí boca y nariz).",
+    "9. Repetí ciclos de 30:2.",
+    "10. Continuá hasta que llegue la ayuda o el bebé responda."
+  ]
+};
+
+// ===== ESTADO =====
+let tipoActual = 'adulto';
+let pasoActual = 0;
+let guiaIniciada = false;
+let metroInterval = null;
+let metroActivo = false;
+let vocesCargadas = false;
+
+// ===== DOM =====
+const themeToggle = document.getElementById('themeToggle');
+const typeCards = document.querySelectorAll('.type-card');
+const startBtn = document.getElementById('startBtn');
+const nextBtn = document.getElementById('nextBtn');
+const stepText = document.getElementById('stepText');
+const stepNumber = document.getElementById('stepNumber');
+const progressCircle = document.getElementById('progressCircle');
+const progressLabel = document.getElementById('progressLabel');
+const stepCounter = document.getElementById('stepCounter');
+const metronomeBox = document.getElementById('metronomeBox');
+const metroStart = document.getElementById('metroStart');
+const metroStop = document.getElementById('metroStop');
+const pulseRing = document.getElementById('pulseRing');
+const voiceBtn = document.getElementById('voiceBtn');
+const statusIndicator = document.getElementById('statusIndicator');
+const toast = document.getElementById('toast');
+
+// ===== TEMAS =====
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  const icon = themeToggle.querySelector('i');
+  icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 }
 
-body {
-  font-family: 'Inter', 'Poppins', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-  transition: background 0.5s ease, color 0.3s ease;
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
 }
 
-:root {
-  --bg: #f0f4f8;
-  --bg-gradient: linear-gradient(145deg, #f0f4f8 0%, #e2e8f0 100%);
-  --card-bg: rgba(255, 255, 255, 0.7);
-  --card-border: rgba(255, 255, 255, 0.35);
-  --text: #0b1a2e;
-  --text-secondary: #4a5a72;
-  --primary: #e63946;
-  --primary-dark: #b71c1c;
-  --primary-glow: rgba(230, 57, 70, 0.2);
-  --secondary: #2d7d9a;
-  --success: #22c55e;
-  --shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
-  --radius: 28px;
-  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --glass-blur: blur(16px);
+const savedTheme = localStorage.getItem('theme') || 'light';
+setTheme(savedTheme);
+themeToggle.addEventListener('click', toggleTheme);
+
+// ===== TOAST (notificaciones sin alert) =====
+function showToast(message, type = 'info', duration = 3000) {
+  toast.textContent = message;
+  toast.className = 'toast';
+  if (type === 'success') toast.classList.add('success');
+  if (type === 'error') toast.classList.add('error');
+  toast.style.display = 'block';
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => {
+    toast.style.display = 'none';
+  }, duration);
 }
 
-[data-theme="dark"] {
-  --bg: #0b1424;
-  --bg-gradient: linear-gradient(145deg, #0b1424 0%, #19233a 100%);
-  --card-bg: rgba(26, 35, 53, 0.75);
-  --card-border: rgba(255, 255, 255, 0.06);
-  --text: #eef2f7;
-  --text-secondary: #94a3b8;
-  --shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+// ===== SELECTOR DE TIPO (sin confirmación) =====
+typeCards.forEach(card => {
+  card.addEventListener('click', () => {
+    const nuevoTipo = card.dataset.type;
+    if (nuevoTipo === tipoActual) return;
+
+    tipoActual = nuevoTipo;
+    typeCards.forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+
+    // Reiniciar guía silenciosamente
+    if (guiaIniciada) {
+      reiniciarGuia();
+      showToast('Tipo cambiado. Reiniciando guía.', 'info');
+    } else {
+      pasoActual = 0;
+      actualizarPaso();
+      startBtn.disabled = false;
+      nextBtn.disabled = true;
+      setStatus('listo');
+    }
+    detenerMetronomo();
+  });
+});
+
+// ===== FUNCIONES DE GUÍA =====
+function actualizarPaso() {
+  const pasos = PASOS[tipoActual];
+  const total = pasos.length;
+  const idx = Math.min(pasoActual, total - 1);
+  const texto = pasos[idx] || '¡Guía completada! ✅';
+
+  // Fade suave
+  stepText.style.opacity = '0';
+  setTimeout(() => {
+    stepText.textContent = texto;
+    stepText.style.opacity = '1';
+  }, 180);
+
+  stepNumber.textContent = String(idx + 1).padStart(2, '0');
+
+  // Progreso circular
+  const progress = ((idx + 1) / total) * 100;
+  const circumference = 314;
+  const offset = circumference - (progress / 100) * circumference;
+  progressCircle.style.strokeDashoffset = offset;
+  progressLabel.textContent = `${Math.round(progress)}%`;
+
+  stepCounter.textContent = `Paso ${idx + 1} de ${total}`;
+
+  // Botón siguiente
+  const isLast = (idx + 1 >= total);
+  nextBtn.disabled = isLast || !guiaIniciada;
+  if (isLast && guiaIniciada) {
+    nextBtn.innerHTML = '<i class="fas fa-check"></i> Finalizado';
+    setStatus('completado');
+  } else if (guiaIniciada) {
+    nextBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Siguiente';
+    setStatus('en progreso');
+  } else {
+    nextBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Siguiente';
+    setStatus('listo');
+  }
+
+  // Voz automática solo si guía iniciada
+  if (guiaIniciada && !isLast) {
+    leerVoz(texto);
+  } else if (isLast && guiaIniciada) {
+    showToast('¡Guía completada! 🎉', 'success', 4000);
+    setStatus('completado');
+  }
 }
 
-/* ===== Contenedor principal ===== */
-.app-wrapper {
-  width: 100%;
-  max-width: 460px;
-  background: var(--bg-gradient);
-  border-radius: var(--radius);
-  padding: 6px;
-  box-shadow: var(--shadow);
-  transition: background 0.5s ease;
+function iniciarGuia() {
+  if (guiaIniciada) return;
+  guiaIniciada = true;
+  pasoActual = 0;
+  actualizarPaso();
+  startBtn.disabled = true;
+  startBtn.innerHTML = '<i class="fas fa-redo"></i> Reiniciar';
+  metronomeBox.style.display = 'block';
+  detenerMetronomo();
+  setStatus('en progreso');
+  showToast('Guía iniciada. Seguí los pasos.', 'success');
 }
 
-.app-container {
-  background: var(--card-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: calc(var(--radius) - 4px);
-  padding: 24px 20px 28px;
-  border: 1px solid var(--card-border);
-  transition: background var(--transition), border var(--transition);
+function reiniciarGuia() {
+  guiaIniciada = false;
+  pasoActual = 0;
+  startBtn.disabled = false;
+  startBtn.innerHTML = '<i class="fas fa-play"></i> Iniciar Guía';
+  nextBtn.disabled = true;
+  metronomeBox.style.display = 'none';
+  detenerMetronomo();
+  actualizarPaso();
+  setStatus('listo');
+  window.speechSynthesis.cancel(); // detener voz
 }
 
-/* ===== Header ===== */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2px;
+function siguientePaso() {
+  const pasos = PASOS[tipoActual];
+  if (pasoActual + 1 < pasos.length) {
+    pasoActual++;
+    actualizarPaso();
+  } else {
+    // Ya completado, reiniciamos
+    reiniciarGuia();
+    showToast('Reiniciando guía. ¡Nuevo intento!', 'info');
+  }
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+// ===== VOZ NATURAL ESTABLE =====
+let vocesListas = false;
+
+function cargarVoces() {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) return resolve(false);
+    const voces = window.speechSynthesis.getVoices();
+    if (voces.length > 0) {
+      vocesListas = true;
+      return resolve(true);
+    }
+    window.speechSynthesis.onvoiceschanged = () => {
+      vocesListas = true;
+      resolve(true);
+    };
+    // Timeout por si el evento no se dispara
+    setTimeout(() => resolve(true), 1500);
+  });
 }
 
-.ecg-icon svg {
-  width: 60px;
-  height: 24px;
+function getVozNatural() {
+  if (!window.speechSynthesis) return null;
+  const voces = window.speechSynthesis.getVoices();
+  const preferidas = voces.filter(v =>
+    v.lang.startsWith('es') &&
+    (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
+  );
+  return preferidas.length ? preferidas[0] : voces.find(v => v.lang.startsWith('es')) || null;
 }
 
-.app-header h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+async function leerVoz(texto) {
+  if (!window.speechSynthesis) {
+    showToast('Tu navegador no soporta voz.', 'error');
+    return;
+  }
+  // Asegurar que las voces estén cargadas
+  if (!vocesListas) {
+    await cargarVoces();
+  }
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(texto);
+  utterance.lang = 'es-AR';
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  const voz = getVozNatural();
+  if (voz) utterance.voice = voz;
+
+  // Indicador visual de voz activa
+  voiceBtn.classList.add('speaking');
+  utterance.onend = () => voiceBtn.classList.remove('speaking');
+  utterance.onerror = () => voiceBtn.classList.remove('speaking');
+
+  window.speechSynthesis.speak(utterance);
 }
 
-.app-header h1 span {
-  color: var(--primary);
-  font-weight: 300;
+// Botón de voz manual
+voiceBtn.addEventListener('click', () => {
+  const texto = stepText.textContent;
+  if (guiaIniciada && texto && !texto.includes('¡Guía completada!')) {
+    leerVoz(texto);
+  } else if (!guiaIniciada) {
+    showToast('Iniciá la guía para usar la voz.', 'info');
+  } else {
+    showToast('Guía completada. Reiniciá para repetir.', 'info');
+  }
+});
+
+// ===== METRÓNOMO =====
+function iniciarMetronomo() {
+  if (metroActivo) return;
+  metroActivo = true;
+  metroStart.disabled = true;
+  metroStop.disabled = false;
+  pulseRing.classList.add('beating');
+  metroInterval = setInterval(() => {
+    pulseRing.style.transform = 'scale(1.2)';
+    setTimeout(() => pulseRing.style.transform = 'scale(1)', 100);
+    reproducirTic();
+  }, 500);
 }
 
-.theme-toggle {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 40px;
-  transition: all var(--transition);
+function detenerMetronomo() {
+  metroActivo = false;
+  clearInterval(metroInterval);
+  metroInterval = null;
+  metroStart.disabled = false;
+  metroStop.disabled = true;
+  pulseRing.classList.remove('beating');
+  pulseRing.style.transform = 'scale(1)';
 }
 
-.theme-toggle:hover {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+function reproducirTic() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 1200;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.05);
+  } catch (e) { /* silencio */ }
 }
 
-.subtitle {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 22px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
+metroStart.addEventListener('click', iniciarMetronomo);
+metroStop.addEventListener('click', detenerMetronomo);
+
+// ===== STATUS INDICATOR =====
+function setStatus(state) {
+  const icon = statusIndicator.querySelector('i');
+  const text = statusIndicator.querySelector('span');
+  switch (state) {
+    case 'listo':
+      icon.style.color = '#22c55e';
+      text.textContent = 'Listo para iniciar';
+      break;
+    case 'en progreso':
+      icon.style.color = '#f59e0b';
+      text.textContent = 'Guía en progreso';
+      break;
+    case 'completado':
+      icon.style.color = '#22c55e';
+      text.textContent = '¡Completado!';
+      break;
+    default:
+      icon.style.color = '#94a3b8';
+      text.textContent = 'Seleccioná un tipo';
+  }
 }
 
-/* ===== Selector de tipo ===== */
-.type-selector {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+// ===== EVENTOS PRINCIPALES =====
+startBtn.addEventListener('click', () => {
+  if (guiaIniciada) {
+    reiniciarGuia();
+    showToast('Guía reiniciada.', 'info');
+  } else {
+    iniciarGuia();
+  }
+});
+
+nextBtn.addEventListener('click', siguientePaso);
+
+// ===== INICIALIZACIÓN =====
+async function init() {
+  await cargarVoces();
+  actualizarPaso();
+  setStatus('listo');
+  // Ocultar metrónomo al inicio
+  metronomeBox.style.display = 'none';
 }
 
-.type-card {
-  flex: 1;
-  background: var(--card-bg);
-  backdrop-filter: blur(6px);
-  border: 2px solid var(--card-border);
-  border-radius: 18px;
-  padding: 14px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: all var(--transition);
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.type-card i {
-  font-size: 2rem;
-  color: var(--text-secondary);
-  transition: all var(--transition);
-}
-
-.type-card.active {
-  border-color: var(--primary);
-  background: rgba(230, 57, 70, 0.06);
-  color: var(--primary);
-  box-shadow: 0 4px 20px var(--primary-glow);
-  transform: translateY(-3px);
-}
-
-.type-card.active i {
-  color: var(--primary);
-}
-
-.type-card:hover:not(.active) {
-  border-color: var(--secondary);
-  transform: translateY(-2px);
-}
-
-/* ===== Status indicator ===== */
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
-  padding: 6px 12px;
-  background: var(--card-bg);
-  border-radius: 40px;
-  border: 1px solid var(--card-border);
-  backdrop-filter: blur(4px);
-}
-
-.status-indicator i {
-  font-size: 0.6rem;
-}
-
-/* ===== Progreso circular + barra ===== */
-.progress-area {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.progress-circle {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  flex-shrink: 0;
-}
-
-.progress-circle svg {
-  transform: rotate(-90deg);
-}
-
-.progress-circle circle {
-  transition: stroke-dashoffset 0.6s ease;
-}
-
-.progress-label {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.progress-text {
-  flex: 1;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-/* ===== Tarjeta de paso ===== */
-.step-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--card-border);
-  border-radius: 24px;
-  padding: 22px 18px;
-  margin: 6px 0 18px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.02);
-  transition: all var(--transition);
-  border-left: 6px solid var(--primary);
-}
-
-.step-number {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--primary);
-  background: rgba(230, 57, 70, 0.08);
-  display: inline-block;
-  padding: 2px 14px;
-  border-radius: 40px;
-  margin-bottom: 8px;
-  letter-spacing: 0.5px;
-}
-
-.step-text {
-  font-size: 1.15rem;
-  font-weight: 600;
-  line-height: 1.6;
-  color: var(--text);
-  min-height: 56px;
-  transition: opacity 0.2s ease;
-}
-
-.step-actions {
-  margin-top: 12px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.voice-btn {
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-size: 1.3rem;
-  cursor: pointer;
-  padding: 6px 14px;
-  border-radius: 40px;
-  transition: all var(--transition);
-}
-
-.voice-btn:hover {
-  background: rgba(230, 57, 70, 0.08);
-  transform: scale(1.05);
-}
-
-.voice-btn.speaking {
-  color: var(--success);
-  animation: pulse-voice 0.8s infinite;
-}
-
-@keyframes pulse-voice {
-  0% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 0.6; transform: scale(1); }
-}
-
-/* ===== Controles ===== */
-.controls {
-  display: flex;
-  gap: 12px;
-  margin: 10px 0 16px;
-}
-
-.btn {
-  flex: 1;
-  padding: 14px 12px;
-  border: none;
-  border-radius: 60px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
-  box-shadow: 0 8px 30px var(--primary-glow);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px var(--primary-glow);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--text);
-  border: 2px solid var(--card-border);
-}
-
-.btn-outline:hover:not(:disabled) {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: rgba(230, 57, 70, 0.04);
-}
-
-.btn-outline:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* ===== Metrónomo ===== */
-.metronome-box {
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--card-border);
-  border-radius: 24px;
-  padding: 16px;
-  margin: 10px 0 16px;
-  text-align: center;
-  transition: all var(--transition);
-}
-
-.metro-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.metro-header i {
-  color: var(--primary);
-  font-size: 1.2rem;
-}
-
-.metro-visual {
-  width: 72px;
-  height: 72px;
-  margin: 8px auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pulse-ring {
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, var(--primary), var(--primary-dark));
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 var(--primary-glow);
-  transition: transform 0.1s, box-shadow 0.3s;
-}
-
-.pulse-ring.beating {
-  animation: beat-glow 0.5s infinite alternate;
-}
-
-@keyframes beat-glow {
-  0% { transform: scale(0.9); box-shadow: 0 0 0 0 var(--primary-glow); }
-  100% { transform: scale(1.15); box-shadow: 0 0 30px 12px var(--primary-glow); }
-}
-
-.metro-controls {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 12px;
-}
-
-.metro-btn {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  padding: 6px 20px;
-  border-radius: 40px;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.metro-btn:hover:not(:disabled) {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-.metro-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* ===== Botón emergencia ===== */
-.btn-emergency {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: white;
-  padding: 16px 20px;
-  border-radius: 60px;
-  text-decoration: none;
-  font-weight: 700;
-  margin: 10px 0 8px;
-  animation: emergencyPulse 2s infinite;
-  transition: all var(--transition);
-  border: none;
-}
-
-.btn-emergency:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 30px rgba(185, 28, 28, 0.4);
-}
-
-@keyframes emergencyPulse {
-  0% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.25); }
-  70% { box-shadow: 0 0 0 16px rgba(185, 28, 28, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0); }
-}
-
-/* ===== Toast / Notificaciones internas ===== */
-.toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--text);
-  color: var(--bg);
-  padding: 12px 24px;
-  border-radius: 60px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  z-index: 999;
-  max-width: 90%;
-  text-align: center;
-  transition: opacity 0.3s;
-}
-
-.toast.success {
-  background: var(--success);
-  color: white;
-}
-
-.toast.error {
-  background: var(--primary);
-  color: white;
-}
-
-/* ===== Disclaimer ===== */
-.disclaimer {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  text-align: center;
-  margin-top: 16px;
-  border-top: 1px solid var(--card-border);
-  padding-top: 14px;
-  line-height: 1.6;
-}
-
-.disclaimer i {
-  margin-right: 6px;
-  color: var(--primary);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 440px) {
-  .app-container { padding: 18px 14px 22px; }
-  .step-text { font-size: 1rem; }
-  .controls { flex-direction: column; }
-  .btn { padding: 14px; }
-  .type-card { padding: 12px 0; }
-  .type-card i { font-size: 1.6rem; }
-  .progress-area { gap: 12px; }
-                                 }
+init();
