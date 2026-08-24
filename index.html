@@ -3,26 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Guía RCP · Argentina</title>
-  <!-- Google Fonts (Inter) -->
+  <title>RCP Guía · Health</title>
+  <!-- Google Fonts (Inter + Poppins para contraste) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
-  <!-- Font Awesome 6 (gratis) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-wrapper">
-    <div class="app-container" id="app">
+    <div class="app-container">
       
-      <!-- Header -->
+      <!-- Header con gráfico de ECG -->
       <header class="app-header">
         <div class="header-left">
-          <div class="heart-icon">
-            <i class="fas fa-heartbeat"></i>
+          <div class="ecg-icon">
+            <svg viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="0,15 10,15 15,5 20,25 25,15 35,15 40,5 45,25 50,15 60,15 65,5 70,25 75,15 85,15 90,5 95,25 100,15" 
+                stroke="var(--primary)" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            </svg>
           </div>
-          <h1>Guía RCP</h1>
+          <h1>RCP <span>Health</span></h1>
         </div>
         <div class="header-right">
           <button id="themeToggle" class="theme-toggle" aria-label="Cambiar tema">
@@ -30,9 +33,9 @@
           </button>
         </div>
       </header>
-      <p class="subtitle">Argentina · Asistente interactivo <span class="badge">v2.0</span></p>
+      <p class="subtitle">Asistente interactivo · Argentina</p>
 
-      <!-- Selector de tipo -->
+      <!-- Selector de tipo (cards con iconos grandes) -->
       <div class="type-selector">
         <button class="type-card active" data-type="adulto">
           <i class="fas fa-user"></i>
@@ -48,21 +51,31 @@
         </button>
       </div>
 
-      <!-- Progreso -->
+      <!-- Estado de la guía (mood) -->
+      <div class="status-indicator" id="statusIndicator">
+        <i class="fas fa-circle" style="color: #22c55e;"></i>
+        <span>Listo para iniciar</span>
+      </div>
+
+      <!-- Progreso circular + barra -->
       <div class="progress-area">
-        <div class="progress-info">
-          <span class="step-counter">Paso 1 de 10</span>
-          <span class="step-percent">10%</span>
+        <div class="progress-circle">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--card-border)" stroke-width="8" />
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--primary)" stroke-width="8" 
+              stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" id="progressCircle" />
+          </svg>
+          <span class="progress-label" id="progressLabel">0%</span>
         </div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 10%;"></div>
+        <div class="progress-text">
+          <span class="step-counter" id="stepCounter">Paso 1 de 10</span>
         </div>
       </div>
 
-      <!-- Tarjeta del paso -->
+      <!-- Tarjeta del paso (con número y texto) -->
       <div class="step-card" id="stepCard">
         <div class="step-number" id="stepNumber">01</div>
-        <p class="step-text" id="stepText">Elegí un tipo de RCP y presioná “Iniciar Guía”.</p>
+        <p class="step-text" id="stepText">Seleccioná un tipo y presioná "Iniciar".</p>
         <div class="step-actions">
           <button id="voiceBtn" class="voice-btn" title="Escuchar paso">
             <i class="fas fa-volume-up"></i>
@@ -80,7 +93,7 @@
         </button>
       </div>
 
-      <!-- Metrónomo -->
+      <!-- Metrónomo (mejorado visualmente) -->
       <div id="metronomeBox" class="metronome-box" style="display: none;">
         <div class="metro-header">
           <i class="fas fa-drum"></i>
@@ -95,10 +108,13 @@
         </div>
       </div>
 
-      <!-- Botón emergencia -->
+      <!-- Botón de emergencia -->
       <a href="tel:107" class="btn btn-emergency">
-        <i class="fas fa-phone-alt"></i> Llamar al 107 (Emergencia)
+        <i class="fas fa-phone-alt"></i> Llamar al 107
       </a>
+
+      <!-- Notificaciones internas (toast) -->
+      <div id="toast" class="toast" style="display: none;"></div>
 
       <p class="disclaimer">
         <i class="fas fa-exclamation-triangle"></i> 
