@@ -1,109 +1,113 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Guía RCP · Argentina</title>
   <!-- Google Fonts (Inter) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-  <!-- Font Awesome para iconos (opcional, pero queda bien) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+  <!-- Font Awesome 6 (gratis) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-container" id="app">
-    
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-left">
-        <span class="heart-beat"><i class="fas fa-heartbeat"></i></span>
-        <h1>Guía RCP</h1>
-      </div>
-      <div class="header-right">
-        <button id="theme-toggle" class="theme-toggle" aria-label="Cambiar tema">
-          <i class="fas fa-moon"></i>
+  <div class="app-wrapper">
+    <div class="app-container" id="app">
+      
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <div class="heart-icon">
+            <i class="fas fa-heartbeat"></i>
+          </div>
+          <h1>Guía RCP</h1>
+        </div>
+        <div class="header-right">
+          <button id="themeToggle" class="theme-toggle" aria-label="Cambiar tema">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+      </header>
+      <p class="subtitle">Argentina · Asistente interactivo <span class="badge">v2.0</span></p>
+
+      <!-- Selector de tipo -->
+      <div class="type-selector">
+        <button class="type-card active" data-type="adulto">
+          <i class="fas fa-user"></i>
+          <span>Adulto</span>
+        </button>
+        <button class="type-card" data-type="nino">
+          <i class="fas fa-child"></i>
+          <span>Niño</span>
+        </button>
+        <button class="type-card" data-type="bebe">
+          <i class="fas fa-baby"></i>
+          <span>Bebé</span>
         </button>
       </div>
-    </header>
-    <p class="subtitle">Argentina · Asistente interactivo</p>
 
-    <!-- Selector de tipo (cards) -->
-    <div class="type-selector">
-      <button class="type-card active" data-type="adulto">
-        <i class="fas fa-user"></i>
-        <span>Adulto</span>
-      </button>
-      <button class="type-card" data-type="nino">
-        <i class="fas fa-child"></i>
-        <span>Niño</span>
-      </button>
-      <button class="type-card" data-type="bebe">
-        <i class="fas fa-baby"></i>
-        <span>Bebé</span>
-      </button>
-    </div>
-
-    <!-- Progreso -->
-    <div class="progress-area">
-      <div class="progress-info">
-        <span class="step-counter">Paso 1 de 10</span>
-        <span class="step-percent">10%</span>
+      <!-- Progreso -->
+      <div class="progress-area">
+        <div class="progress-info">
+          <span class="step-counter">Paso 1 de 10</span>
+          <span class="step-percent">10%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 10%;"></div>
+        </div>
       </div>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: 10%;"></div>
-      </div>
-    </div>
 
-    <!-- Tarjeta del paso actual -->
-    <div class="step-card" id="stepCard">
-      <div class="step-number" id="stepNumber">01</div>
-      <p class="step-text" id="stepText">Elegí un tipo de RCP y presioná “Iniciar Guía”.</p>
-      <div class="step-actions">
-        <button id="voiceBtn" class="voice-btn" title="Escuchar paso">
-          <i class="fas fa-volume-up"></i>
+      <!-- Tarjeta del paso -->
+      <div class="step-card" id="stepCard">
+        <div class="step-number" id="stepNumber">01</div>
+        <p class="step-text" id="stepText">Elegí un tipo de RCP y presioná “Iniciar Guía”.</p>
+        <div class="step-actions">
+          <button id="voiceBtn" class="voice-btn" title="Escuchar paso">
+            <i class="fas fa-volume-up"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controles -->
+      <div class="controls">
+        <button id="startBtn" class="btn btn-primary">
+          <i class="fas fa-play"></i> Iniciar Guía
+        </button>
+        <button id="nextBtn" class="btn btn-outline" disabled>
+          <i class="fas fa-arrow-right"></i> Siguiente
         </button>
       </div>
-    </div>
 
-    <!-- Controles principales -->
-    <div class="controls">
-      <button id="startBtn" class="btn btn-primary">
-        <i class="fas fa-play"></i> Iniciar Guía
-      </button>
-      <button id="nextBtn" class="btn btn-outline" disabled>
-        <i class="fas fa-arrow-right"></i> Siguiente
-      </button>
-    </div>
-
-    <!-- Metrónomo -->
-    <div id="metronomeBox" class="metronome-box" style="display: none;">
-      <div class="metro-header">
-        <i class="fas fa-drum"></i>
-        <span>Metrónomo · 100-120/min</span>
+      <!-- Metrónomo -->
+      <div id="metronomeBox" class="metronome-box" style="display: none;">
+        <div class="metro-header">
+          <i class="fas fa-drum"></i>
+          <span>Metrónomo · 100-120/min</span>
+        </div>
+        <div class="metro-visual">
+          <div class="pulse-ring" id="pulseRing"></div>
+        </div>
+        <div class="metro-controls">
+          <button id="metroStart" class="metro-btn"><i class="fas fa-play"></i> Iniciar</button>
+          <button id="metroStop" class="metro-btn" disabled><i class="fas fa-stop"></i> Parar</button>
+        </div>
       </div>
-      <div class="metro-visual">
-        <div class="pulse-ring" id="pulseRing"></div>
-      </div>
-      <div class="metro-controls">
-        <button id="metroStart" class="metro-btn"><i class="fas fa-play"></i> Iniciar</button>
-        <button id="metroStop" class="metro-btn" disabled><i class="fas fa-stop"></i> Parar</button>
-      </div>
+
+      <!-- Botón emergencia -->
+      <a href="tel:107" class="btn btn-emergency">
+        <i class="fas fa-phone-alt"></i> Llamar al 107 (Emergencia)
+      </a>
+
+      <p class="disclaimer">
+        <i class="fas fa-exclamation-triangle"></i> 
+        Guía de auxilio. No reemplaza la formación profesional. 
+        Ante una emergencia real, llamá al <strong>107</strong> o <strong>911</strong>.
+      </p>
     </div>
-
-    <!-- Botón de emergencia -->
-    <a href="tel:107" class="btn btn-emergency">
-      <i class="fas fa-phone"></i> Llamar al 107 (Emergencia)
-    </a>
-
-    <p class="disclaimer">
-      <i class="fas fa-exclamation-triangle"></i> 
-      Guía de auxilio. No reemplaza la formación profesional. 
-      Ante una emergencia real, llamá al <strong>107</strong> o <strong>911</strong>.
-    </p>
   </div>
 
   <script src="app.js"></script>
 </body>
-        </html>
+</html>
